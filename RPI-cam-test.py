@@ -62,4 +62,4 @@ if __name__ == '__main__':
     local_socket.connect(("8.8.8.8", 80))
     local_ip = '192.168.1.148'#local_socket.getsockname()[0]
     # socket.gethostbyname(socket.gethostname())
-    app.run(host=local_ip, port='5000', debug=False)
+    app.run(host=local_ip, port='80', debug=False)
