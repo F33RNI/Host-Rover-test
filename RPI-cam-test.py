@@ -1,21 +1,65 @@
+import threading
+
 import cv2
-import numpy as np
+from flask import Flask, render_template, Response, redirect, request
 import socket
-import sys
-import pickle
-import struct
 
-cap=cv2.VideoCapture(1)
-clientsocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-clientsocket.connect(('192.168.1.148',8089))
+app = Flask(__name__)
 
-while True:
-    ret,frame=cap.read()
-    # Serialize frame
-    data = pickle.dumps(frame)
+frame = None
 
-    # Send message length first
-    message_size = struct.pack("L", len(data)) ### CHANGED
 
-    # Then data
-    clientsocket.sendall(message_size + data)
+def opencv_video():
+    print('Starting openCV video')
+    global frame
+    capture = cv2.VideoCapture(1)
+    while True:
+        ret, frame = capture.read()
+        if not ret:
+            break
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/video_feed')
+def video_feed():
+    if frame is not None:
+        new_response = Response(gen(),
+                                mimetype="multipart/x-mixed-replace; boundary=frame")
+        new_response.headers.add('Connection', 'close')
+        new_response.headers.add('Max-Age', '0')
+        new_response.headers.add('Expires', '0')
+        new_response.headers.add('Cache-Control', 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0')
+        new_response.headers.add('Pragma', 'no-cache')
+        #new_response.headers.add('Access-Control-Allow-Origin', '*')
+        #new_response.headers.add('Cache-Control', 'no-cache')
+        return new_response
+    else:
+        return '', 204
+
+
+def gen():
+    global frame
+    while True:
+        if frame is not None:
+            (flag, encoded_image) = cv2.imencode('.jpg', frame)
+            if not flag:
+                continue
+            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                   bytearray(encoded_image) + b'\r\n')
+        else:
+            break
+
+
+if __name__ == '__main__':
+    thread = threading.Thread(target=opencv_video)
+    thread.start()
+
+    local_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    local_socket.connect(("8.8.8.8", 80))
+    local_ip = '192.168.1.148'#local_socket.getsockname()[0]
+    # socket.gethostbyname(socket.gethostname())
+    app.run(host=local_ip, port='5000', debug=False)
