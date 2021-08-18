@@ -12,7 +12,7 @@ frame = None
 def opencv_video():
     print('Starting openCV video')
     global frame
-    capture = cv2.VideoCapture(1)
+    capture = cv2.VideoCapture(0)
     while True:
         ret, frame = capture.read()
         if not ret:
