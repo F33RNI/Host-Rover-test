@@ -1,10 +1,15 @@
+import socket
 import threading
 
 import cv2
-from flask import Flask, render_template, Response, redirect, request
-import socket
+from flask import Flask, render_template, Response
+from pyA20.gpio import gpio
+from pyA20.gpio import port
 
 CAMERA_ID = 0
+MOTOR_1_DIR_PORT = port.PA1
+MOTOR_2_DIR_PORT = port.PA12
+MOTORS_ENABLE_PORT = port.PA11
 
 app = Flask(__name__)
 frame = None
@@ -57,6 +62,29 @@ def move(direction):
     Called from a GET request
     """
     print('New HTTP GET request! Moving', direction)
+    
+    # TODO: Put your motor control code here
+    if direction == 'forward':
+        gpio.output(MOTOR_1_DIR_PORT, 1)
+        gpio.output(MOTOR_2_DIR_PORT, 1)
+        gpio.output(MOTORS_ENABLE_PORT, 1)
+    elif direction == 'left':
+        gpio.output(MOTOR_1_DIR_PORT, 0)
+        gpio.output(MOTOR_2_DIR_PORT, 1)
+        gpio.output(MOTORS_ENABLE_PORT, 1)
+    elif direction == 'backward':
+        gpio.output(MOTOR_1_DIR_PORT, 0)
+        gpio.output(MOTOR_2_DIR_PORT, 0)
+        gpio.output(MOTORS_ENABLE_PORT, 1)
+    elif direction == 'right':
+        gpio.output(MOTOR_1_DIR_PORT, 1)
+        gpio.output(MOTOR_2_DIR_PORT, 0)
+        gpio.output(MOTORS_ENABLE_PORT, 1)
+    elif direction == 'stop':
+        gpio.output(MOTOR_1_DIR_PORT, 0)
+        gpio.output(MOTOR_2_DIR_PORT, 0)
+        gpio.output(MOTORS_ENABLE_PORT, 0)
+        
     return direction, 200
 
 
@@ -96,7 +124,20 @@ def gen():
             break
 
 
+def setup_ports():
+    """
+    Configures physical ports as digital outputs
+    """
+    gpio.init()
+    gpio.setcfg(MOTOR_1_DIR_PORT, gpio.OUTPUT)
+    gpio.setcfg(MOTOR_2_DIR_PORT, gpio.OUTPUT)
+    gpio.setcfg(MOTORS_ENABLE_PORT, gpio.OUTPUT)
+
+
 if __name__ == '__main__':
+    # Configure ports
+    setup_ports()
+
     # Find local IP
     local_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     local_socket.connect(('8.8.8.8', 80))
