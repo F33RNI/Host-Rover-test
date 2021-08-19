@@ -52,7 +52,7 @@ def video_feed():
 
 
 @app.route('/move/<string:direction>')
-def video_feed(direction):
+def move(direction):
     """
     Called from a GET request
     """
