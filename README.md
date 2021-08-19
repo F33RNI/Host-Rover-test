@@ -10,6 +10,7 @@ This repository and the code in it were created for informational purposes only 
 Tested on Orange Pi Zero with Armbian_21.05.6_Orangepizero_buster_current_5.10.43
 
 ```
+sudo apt-get update
 sudo apt-get install git
 sudo apt-get install python3-dev
 sudo apt-get install python3-pip
