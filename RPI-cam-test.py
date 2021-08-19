@@ -3,13 +3,17 @@ import threading
 
 import cv2
 from flask import Flask, render_template, Response
-from pyA20.gpio import gpio
-from pyA20.gpio import port
+# Replace with RPi.GPIO if using Raspberry PI instead of Orange PI
+import OPi.GPIO as GPIO
 
+# Camera ID (0 = default camera)
 CAMERA_ID = 0
-MOTOR_1_DIR_PORT = port.PA1
-MOTOR_2_DIR_PORT = port.PA12
-MOTORS_ENABLE_PORT = port.PA11
+# Orange PI board (for OPi.GPIO library)
+ORANGE_PI_BOARD = GPIO.ZERO
+# Hardware ports
+MOTOR_1_DIR_PORT = 0    # PA0
+MOTOR_2_DIR_PORT = 1    # PA1
+MOTORS_ENABLE_PORT = 3  # PA3
 
 app = Flask(__name__)
 frame = None
@@ -33,10 +37,12 @@ def video_feed():
 
     # Start new OpenCV thread
     if not opencv_working:
+        print('Starting new OpenCV thread...')
         opencv_working = True
         threading.Thread(target=opencv_thread).start()
         while frame is None:
             pass
+        print('OpenCV stream started successfully')
 
     if frame is not None:
         # Make response with encoded frame as JPEG image
@@ -62,29 +68,29 @@ def move(direction):
     Called from a GET request
     """
     print('New HTTP GET request! Moving', direction)
-    
+
     # TODO: Put your motor control code here
     if direction == 'forward':
-        gpio.output(MOTOR_1_DIR_PORT, 1)
-        gpio.output(MOTOR_2_DIR_PORT, 1)
-        gpio.output(MOTORS_ENABLE_PORT, 1)
+        GPIO.output(MOTOR_1_DIR_PORT, 1)
+        GPIO.output(MOTOR_2_DIR_PORT, 1)
+        GPIO.output(MOTORS_ENABLE_PORT, 1)
     elif direction == 'left':
-        gpio.output(MOTOR_1_DIR_PORT, 0)
-        gpio.output(MOTOR_2_DIR_PORT, 1)
-        gpio.output(MOTORS_ENABLE_PORT, 1)
+        GPIO.output(MOTOR_1_DIR_PORT, 0)
+        GPIO.output(MOTOR_2_DIR_PORT, 1)
+        GPIO.output(MOTORS_ENABLE_PORT, 1)
     elif direction == 'backward':
-        gpio.output(MOTOR_1_DIR_PORT, 0)
-        gpio.output(MOTOR_2_DIR_PORT, 0)
-        gpio.output(MOTORS_ENABLE_PORT, 1)
+        GPIO.output(MOTOR_1_DIR_PORT, 0)
+        GPIO.output(MOTOR_2_DIR_PORT, 0)
+        GPIO.output(MOTORS_ENABLE_PORT, 1)
     elif direction == 'right':
-        gpio.output(MOTOR_1_DIR_PORT, 1)
-        gpio.output(MOTOR_2_DIR_PORT, 0)
-        gpio.output(MOTORS_ENABLE_PORT, 1)
+        GPIO.output(MOTOR_1_DIR_PORT, 1)
+        GPIO.output(MOTOR_2_DIR_PORT, 0)
+        GPIO.output(MOTORS_ENABLE_PORT, 1)
     elif direction == 'stop':
-        gpio.output(MOTOR_1_DIR_PORT, 0)
-        gpio.output(MOTOR_2_DIR_PORT, 0)
-        gpio.output(MOTORS_ENABLE_PORT, 0)
-        
+        GPIO.output(MOTOR_1_DIR_PORT, 0)
+        GPIO.output(MOTOR_2_DIR_PORT, 0)
+        GPIO.output(MOTORS_ENABLE_PORT, 0)
+
     return direction, 200
 
 
@@ -128,10 +134,16 @@ def setup_ports():
     """
     Configures physical ports as digital outputs
     """
-    gpio.init()
-    gpio.setcfg(MOTOR_1_DIR_PORT, gpio.OUTPUT)
-    gpio.setcfg(MOTOR_2_DIR_PORT, gpio.OUTPUT)
-    gpio.setcfg(MOTORS_ENABLE_PORT, gpio.OUTPUT)
+    # BOARD BCM numbering
+    GPIO.setboard(ORANGE_PI_BOARD)
+
+    # Orange Pi board
+    GPIO.setmode(GPIO.BOARD)
+
+    # Configure ports as output
+    GPIO.setup(MOTOR_1_DIR_PORT, GPIO.OUT)
+    GPIO.setup(MOTOR_2_DIR_PORT, GPIO.OUT)
+    GPIO.setup(MOTORS_ENABLE_PORT, GPIO.OUT)
 
 
 if __name__ == '__main__':
