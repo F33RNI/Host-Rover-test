@@ -134,6 +134,7 @@ def opencv_thread():
             ret, frame = capture.read()
             if not ret:
                 print('Frame is empty!')
+                break
     except Exception as e:
         print('Error during openCV video thread!', e)
 
