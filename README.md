@@ -1,5 +1,5 @@
 # Host-Rover-test
-## Test software for communication between (Orange Pi based rover) and host (computer)
+## Test software for communication between rover (Orange Pi based) and host (computer)
 
 ![Screenshot](SCREENSHOT.png "Screenshot")
 
